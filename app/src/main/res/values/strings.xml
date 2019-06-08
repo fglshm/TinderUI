@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TinderUI</string>
+    <string name="like">LIKE</string>
+    <string name="nope">NOPE</string>
+</resources>

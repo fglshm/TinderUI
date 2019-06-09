@@ -16,49 +16,18 @@ import kotlinx.android.synthetic.main.card_item.view.*
 import kotlinx.android.synthetic.main.fragment_swipe.*
 import java.util.concurrent.atomic.AtomicInteger
 import android.widget.LinearLayout
+import com.fglshm.tinderui.data.Data
 
 class SwipeFragment : BaseFragment() {
 
-    private val imageList = listOf(
-        R.drawable.person1,
-        R.drawable.person2,
-        R.drawable.person4,
-        R.drawable.person5,
-        R.drawable.person6,
-        R.drawable.person7,
-        R.drawable.person9,
-        R.drawable.person10,
-        R.drawable.person11
-    )
-
-    private val nameList = listOf(
-        "Debbie Miller Wilson",
-        "Darlene N. Riley",
-        "Natasha Morgan Christian",
-        "Eloise Erickson Dawkins",
-        "Fatma Lucia Holbrook",
-        "Tin Gill Stanford",
-        "Marissa Al Brady",
-        "Sunny Davidson Curran",
-        "Mina Morrison Briones"
-    )
-
-    private val descList = listOf(
-        "Hello, my name is Debbie Miller Wilson",
-        "Hello, my name is Darlene N. Riley",
-        "Hello, my name is Natasha Morgan Christian",
-        "Hello, my name is Eloise Erickson Dawkins",
-        "Hello, my name is Fatma Lucia Holbrook",
-        "Hello, my name is Tin Gill Stanford",
-        "Hello, my name is Marissa Al Brady",
-        "Hello, my name is Sunny Davidson Curran",
-        "Hello, my name is Mina Morrison Briones"
-    )
-
-    private val atomicInteger = AtomicInteger()
-
     override val logTag: String = SwipeFragment::class.java.simpleName
     override fun getLayout(): Int = R.layout.fragment_swipe
+
+    private val imageList = Data.imageList
+    private val nameList = Data.nameList
+    private val descList = Data.descList
+
+    private val atomicInteger = AtomicInteger()
 
     private val cardContainer by lazy { card_container }
     private val likeCard by lazy { card_like_fragment_swipe }
@@ -85,11 +54,17 @@ class SwipeFragment : BaseFragment() {
         true
     }
 
+    /**
+     * save first point of touch
+     */
     private fun handleActionDown(event: MotionEvent) {
         initX = event.rawX
         initY = event.rawY
     }
 
+    /**
+     * translate card according to user gesture
+     */
     private fun handleActionMove(event: MotionEvent, card: View) {
         diffX = event.rawX.minus(initX)
         diffY = event.rawY.minus(initY)
@@ -115,6 +90,9 @@ class SwipeFragment : BaseFragment() {
         card.rotation = angle.toFloat()
     }
 
+    /**
+     * the action when user stops gesture
+     */
     private fun handleActionUp(card: View) {
         if (Math.abs(diffX) > 350) {
             card.animate().apply {
@@ -152,11 +130,11 @@ class SwipeFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setCards()
+        setInitialCards()
         setClickListener()
     }
 
-    private fun setCards() {
+    private fun setInitialCards() {
         repeat(3) {
             cardContainer.addView(createCardView(), 0)
         }
@@ -164,89 +142,55 @@ class SwipeFragment : BaseFragment() {
 
     private fun setClickListener() {
         likeCard.setOnClickListener {
-            val topCard = cardContainer.getChildAt(cardContainer.childCount.minus(1))
-            topCard.text_like_card_item.animate().apply {
-                duration = 200
-                alpha(1F)
-            }.setListener(object : Animator.AnimatorListener {
-                override fun onAnimationEnd(animation: Animator?) {
-                    topCard.animate().apply {
-                        duration = 200
-                        translationX(1500F)
-                    }.setListener(object : Animator.AnimatorListener {
-                        override fun onAnimationRepeat(animation: Animator?) {
-
-                        }
-
-                        override fun onAnimationEnd(animation: Animator?) {
-                            cardContainer.removeViewAt(cardContainer.childCount.minus(1))
-                            cardContainer.getChildAt(cardContainer.childCount.minus(1))
-                                .setOnTouchListener(cardTouchListener)
-                            cardContainer.addView(createCardView(), 0)
-                        }
-
-                        override fun onAnimationCancel(animation: Animator?) {
-
-                        }
-
-                        override fun onAnimationStart(animation: Animator?) {
-                            val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2))
-                            nextCard.animate().apply {
-                                duration = 200
-                                scaleX(1.0F)
-                                scaleY(1.0F)
-                            }.start()
-                        }
-                    }).start()
-                }
-
-                override fun onAnimationRepeat(animation: Animator?) {}
-                override fun onAnimationCancel(animation: Animator?) {}
-                override fun onAnimationStart(animation: Animator?) {}
-            }).start()
+            handleButton(true)
         }
         dislikeCard.setOnClickListener {
-            val topCard = cardContainer.getChildAt(cardContainer.childCount.minus(1))
-            topCard.text_dislike_card_item.animate().apply {
-                duration = 200
-                alpha(1F)
-            }.setListener(object : Animator.AnimatorListener {
-                override fun onAnimationEnd(animation: Animator?) {
-                    topCard.animate().apply {
-                        duration = 200
-                        translationX(-1500F)
-                    }.setListener(object : Animator.AnimatorListener {
-                        override fun onAnimationRepeat(animation: Animator?) {
-
-                        }
-
-                        override fun onAnimationEnd(animation: Animator?) {
-                            cardContainer.removeViewAt(cardContainer.childCount.minus(1))
-                            cardContainer.getChildAt(cardContainer.childCount.minus(1))
-                                .setOnTouchListener(cardTouchListener)
-                            cardContainer.addView(createCardView(), 0)
-                        }
-
-                        override fun onAnimationCancel(animation: Animator?) {
-
-                        }
-
-                        override fun onAnimationStart(animation: Animator?) {
-                            val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2))
-                            nextCard.animate().apply {
-                                duration = 200
-                                scaleX(1.0F)
-                                scaleY(1.0F)
-                            }.start()
-                        }
-                    }).start()
-                }
-
-                override fun onAnimationRepeat(animation: Animator?) {}
-                override fun onAnimationCancel(animation: Animator?) {}
-                override fun onAnimationStart(animation: Animator?) {}
-            }).start()
+            handleButton(false)
         }
+    }
+
+    private fun handleButton(isLike: Boolean) {
+        val topCard = cardContainer.getChildAt(cardContainer.childCount.minus(1))
+        val animatedTextView = if (isLike) topCard.text_like_card_item else topCard.text_dislike_card_item
+        animatedTextView.animate().apply {
+            duration = 250
+            alpha(1F)
+        }.setListener(object : Animator.AnimatorListener {
+            override fun onAnimationEnd(animation: Animator?) {
+                topCard.animate().apply {
+                    duration = 200
+                    translationX(if (isLike) 1500F else -1500F)
+                }.setListener(object : Animator.AnimatorListener {
+                    override fun onAnimationRepeat(animation: Animator?) {
+
+                    }
+
+                    override fun onAnimationEnd(animation: Animator?) {
+                        cardContainer.removeViewAt(cardContainer.childCount.minus(1))
+                        cardContainer.getChildAt(cardContainer.childCount.minus(1))
+                            .setOnTouchListener(cardTouchListener)
+                        cardContainer.addView(createCardView(), 0)
+                    }
+
+                    override fun onAnimationCancel(animation: Animator?) {
+
+                    }
+
+                    override fun onAnimationStart(animation: Animator?) {
+                        val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2))
+                        nextCard.animate().apply {
+                            duration = 200
+                            scaleX(1.0F)
+                            scaleY(1.0F)
+                        }.start()
+                    }
+                }).setStartDelay(250).start()
+            }
+
+            override fun onAnimationRepeat(animation: Animator?) {}
+            override fun onAnimationCancel(animation: Animator?) {}
+            override fun onAnimationStart(animation: Animator?) {}
+        }).start()
     }
 
     @SuppressLint("ClickableViewAccessibility", "InflateParams")
@@ -263,12 +207,15 @@ class SwipeFragment : BaseFragment() {
         }
         card.text_description_card_item.text = descList[atomicInteger.get() % 9]
         card.text_name_card_item.text = nameList[atomicInteger.getAndIncrement() % 9]
+
+        // this is for achieving scale animation when top car is gone.
         if (atomicInteger.get() != 1) {
             card.scaleX = 0.95F
             card.scaleY = 0.95F
         } else {
             card.setOnTouchListener(cardTouchListener)
         }
+
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT

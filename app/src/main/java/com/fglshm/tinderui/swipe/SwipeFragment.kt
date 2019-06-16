@@ -3,6 +3,7 @@ package com.fglshm.tinderui.swipe
 import android.animation.Animator
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -17,27 +18,40 @@ import kotlinx.android.synthetic.main.fragment_swipe.*
 import java.util.concurrent.atomic.AtomicInteger
 import android.widget.LinearLayout
 import com.fglshm.tinderui.data.Data
+import android.view.animation.AlphaAnimation
+
 
 class SwipeFragment : BaseFragment() {
 
+    interface OnLikeListButtonClickListener {
+        fun onLikeListButtonClick()
+    }
+
     override val logTag: String = SwipeFragment::class.java.simpleName
     override fun getLayout(): Int = R.layout.fragment_swipe
+
+    var listener: OnLikeListButtonClickListener? = null
 
     private val imageList = Data.imageList
     private val nameList = Data.nameList
     private val descList = Data.descList
 
-    private val atomicInteger = AtomicInteger()
+    private lateinit var atomicInteger: AtomicInteger
 
     private val cardContainer by lazy { card_container }
     private val likeCard by lazy { card_like_fragment_swipe }
     private val dislikeCard by lazy { card_dislike_fragment_swipe }
+    private val likeListButton by lazy { image_button_like_list }
+    private val reloadButton by lazy { image_button_reload }
+    private val progressBar by lazy { progress }
 
     private var direction: Int = 0
     private var initX: Float = 0F
     private var initY: Float = 0F
     private var diffX: Float = 0F
     private var diffY: Float = 0F
+
+    private var topCard: CardView? = null
 
     private val cardTouchListener = View.OnTouchListener { card, event ->
         when (event.action) {
@@ -73,9 +87,9 @@ class SwipeFragment : BaseFragment() {
         } else {
             1.0
         }
-        val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2))
-        nextCard.scaleX = scale.toFloat()
-        nextCard.scaleY = scale.toFloat()
+        val nextCard: View? = cardContainer.getChildAt(cardContainer.childCount.minus(2))
+        nextCard?.scaleX = scale.toFloat()
+        nextCard?.scaleY = scale.toFloat()
         direction = if (diffX > 0) 1 else -1
         card.translationX = diffX
         card.translationY = diffY
@@ -99,10 +113,24 @@ class SwipeFragment : BaseFragment() {
                 duration = 100
                 translationX(1500F * direction)
             }.setListener(object : Animator.AnimatorListener {
+                @SuppressLint("ClickableViewAccessibility")
                 override fun onAnimationEnd(animation: Animator?) {
+                    if (cardContainer.childCount > 1) {
+                        val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2)) as? CardView
+                        topCard = nextCard
+                        nextCard?.setOnTouchListener(cardTouchListener)
+                    }
                     cardContainer.removeViewAt(cardContainer.childCount.minus(1))
-                    cardContainer.getChildAt(cardContainer.childCount.minus(1)).setOnTouchListener(cardTouchListener)
-                    cardContainer.addView(createCardView(), 0)
+                    if (atomicInteger.get() != imageList.size) {
+                        cardContainer.addView(createCardView(), 0)
+                    }
+                    if (cardContainer.childCount == 0) {
+                        reloadButton.visibility = View.VISIBLE
+                        reloadButton.animate().apply {
+                            alpha(1.0F)
+                            duration = 250
+                        }.setStartDelay(250).start()
+                    }
                 }
 
                 override fun onAnimationRepeat(animation: Animator?) {}
@@ -135,21 +163,47 @@ class SwipeFragment : BaseFragment() {
     }
 
     private fun setInitialCards() {
+        atomicInteger = AtomicInteger()
         repeat(3) {
-            cardContainer.addView(createCardView(), 0)
+            val card = createCardView()
+            cardContainer.addView(card, 0)
+            val animation = AlphaAnimation(0f, 1f)
+            animation.duration = 300
+            card.startAnimation(animation)
         }
     }
 
     private fun setClickListener() {
         likeCard.setOnClickListener {
+            showLog(topCard?.text_name_card_item?.text)
             handleButton(true)
         }
         dislikeCard.setOnClickListener {
             handleButton(false)
         }
+        likeListButton.setOnClickListener {
+            listener?.onLikeListButtonClick()
+        }
+        reloadButton.setOnClickListener {
+            it.alpha = 0.0F
+            it.visibility = View.GONE
+            progressBar.visibility = View.VISIBLE
+            progressBar.animate().apply {
+                duration = 250
+                alpha(1.0F)
+            }.start()
+            Handler().postDelayed({
+                run {
+                    progressBar.alpha = 0.0F
+                    progressBar.visibility = View.GONE
+                    setInitialCards()
+                }
+            }, 1000)
+        }
     }
 
     private fun handleButton(isLike: Boolean) {
+        if (cardContainer.childCount == 0) return
         val topCard = cardContainer.getChildAt(cardContainer.childCount.minus(1))
         val animatedTextView = if (isLike) topCard.text_like_card_item else topCard.text_dislike_card_item
         animatedTextView.animate().apply {
@@ -161,22 +215,28 @@ class SwipeFragment : BaseFragment() {
                     duration = 200
                     translationX(if (isLike) 1500F else -1500F)
                 }.setListener(object : Animator.AnimatorListener {
-                    override fun onAnimationRepeat(animation: Animator?) {
-
-                    }
-
+                    @SuppressLint("ClickableViewAccessibility")
                     override fun onAnimationEnd(animation: Animator?) {
+                        if (cardContainer.childCount > 1) {
+                            val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2)) as? CardView
+                            this@SwipeFragment.topCard = nextCard
+                            nextCard?.setOnTouchListener(cardTouchListener)
+                        }
                         cardContainer.removeViewAt(cardContainer.childCount.minus(1))
-                        cardContainer.getChildAt(cardContainer.childCount.minus(1))
-                            .setOnTouchListener(cardTouchListener)
-                        cardContainer.addView(createCardView(), 0)
-                    }
-
-                    override fun onAnimationCancel(animation: Animator?) {
-
+                        if (atomicInteger.get() != imageList.size) {
+                            cardContainer.addView(createCardView(), 0)
+                        }
+                        if (cardContainer.childCount == 0) {
+                            reloadButton.visibility = View.VISIBLE
+                            reloadButton.animate().apply {
+                                alpha(1.0F)
+                                duration = 250
+                            }.setStartDelay(250).start()
+                        }
                     }
 
                     override fun onAnimationStart(animation: Animator?) {
+                        if (cardContainer.childCount == 1) return
                         val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2))
                         nextCard.animate().apply {
                             duration = 200
@@ -184,6 +244,9 @@ class SwipeFragment : BaseFragment() {
                             scaleY(1.0F)
                         }.start()
                     }
+
+                    override fun onAnimationCancel(animation: Animator?) {}
+                    override fun onAnimationRepeat(animation: Animator?) {}
                 }).setStartDelay(250).start()
             }
 
@@ -202,11 +265,13 @@ class SwipeFragment : BaseFragment() {
             requestLayout()
             layoutParams.width = imageWidth
             layoutParams.height = imageHeight
-            Glide.with(mContext).load(imageList[atomicInteger.get() % 9])
+            Glide.with(mContext).load(imageList[atomicInteger.get() % 11])
                 .apply(RequestOptions().override(imageWidth, imageHeight)).centerCrop().into(this)
         }
-        card.text_description_card_item.text = descList[atomicInteger.get() % 9]
-        card.text_name_card_item.text = nameList[atomicInteger.getAndIncrement() % 9]
+        card.text_description_card_item.text = null
+        card.text_name_card_item.text = null
+        card.text_description_card_item.text = descList[atomicInteger.get() % 11]
+        card.text_name_card_item.text = nameList[atomicInteger.getAndIncrement() % 11]
 
         // this is for achieving scale animation when top car is gone.
         if (atomicInteger.get() != 1) {
@@ -214,6 +279,7 @@ class SwipeFragment : BaseFragment() {
             card.scaleY = 0.95F
         } else {
             card.setOnTouchListener(cardTouchListener)
+            topCard = card
         }
 
         val params = LinearLayout.LayoutParams(
@@ -221,10 +287,11 @@ class SwipeFragment : BaseFragment() {
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
         val cardButtonWidth = likeCard.layoutParams.width
+        val peopleImageWidth = likeListButton.layoutParams.width
         params.marginStart = 16.times(scale)
         params.marginEnd = 16.times(scale)
-        params.bottomMargin = cardButtonWidth.times(2)
-        params.topMargin = 16.times(scale)
+        params.bottomMargin = cardButtonWidth.plus(32.times(scale))
+        params.topMargin = peopleImageWidth.plus(32.times(scale))
         card.layoutParams = params
         return card
     }

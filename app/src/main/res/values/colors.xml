@@ -3,8 +3,8 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
-    <color name="colorBestBlack">#222</color>
-    <color name="colorBestWhite">#fff</color>
+    <color name="colorWhite">#fff</color>
     <color name="colorPink">#FF176F</color>
+    <color name="colorBlack">#333</color>
     <color name="colorGreen">#94FF32</color>
 </resources>

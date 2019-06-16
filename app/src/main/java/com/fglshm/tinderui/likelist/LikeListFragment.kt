@@ -54,19 +54,14 @@ class LikeListFragment : BaseFragment(), LikeListContract.View {
                         (mContext as MainActivity).popCurrentFragment()
                     }
                     BottomSheetBehavior.STATE_DRAGGING -> {
-                        showLog("STATE_DRAGGING")
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
-                        showLog("STATE_EXPANDED")
                     }
                     BottomSheetBehavior.STATE_HALF_EXPANDED -> {
-                        showLog("STATE_HALF_EXPANDED")
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
-                        showLog("STATE_COLLAPSED")
                     }
                     BottomSheetBehavior.STATE_SETTLING -> {
-                        showLog("STATE_SETTLING")
                     }
                     else -> {
 

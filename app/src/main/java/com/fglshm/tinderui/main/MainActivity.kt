@@ -3,11 +3,9 @@ package com.fglshm.tinderui.main
 import android.os.Bundle
 import android.util.Log
 import com.fglshm.tinderui.R
-import com.fglshm.tinderui.application.App
 import com.fglshm.tinderui.base.BaseActivity
-import com.fglshm.tinderui.extention.transact
+import com.fglshm.tinderui.extension.transact
 import com.fglshm.tinderui.likelist.LikeListFragment
-import com.fglshm.tinderui.model.Person
 import com.fglshm.tinderui.swipe.SwipeFragment
 
 class MainActivity : BaseActivity(), SwipeFragment.OnLikeListButtonClickListener, MainContract.View {
@@ -50,8 +48,6 @@ class MainActivity : BaseActivity(), SwipeFragment.OnLikeListButtonClickListener
     override fun popCurrentFragment() {
         supportFragmentManager.popBackStack()
     }
-
-    private fun showLog(text: Any?) = Log.d(logTag, text?.toString() ?: "ERROR: text is null")
 
 }
 

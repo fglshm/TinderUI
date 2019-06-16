@@ -1,4 +1,4 @@
-package com.fglshm.tinderui.extention
+package com.fglshm.tinderui.extension
 
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction

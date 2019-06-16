@@ -21,7 +21,7 @@ class App : Application() {
         Realm.init(applicationContext)
         realm = Realm.getDefaultInstance()
 
-        val persons = App.realm?.where(Person::class.java)?.findAll()
+        val persons = realm?.where(Person::class.java)?.findAll()
         realm?.executeTransaction {
             persons?.deleteAllFromRealm()
             Log.d("App", "[ ALL DELETED ]")

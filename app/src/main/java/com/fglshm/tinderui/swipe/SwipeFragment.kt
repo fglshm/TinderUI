@@ -2,8 +2,10 @@ package com.fglshm.tinderui.swipe
 
 import android.animation.Animator
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -19,6 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import android.widget.LinearLayout
 import com.fglshm.tinderui.data.Data
 import android.view.animation.AlphaAnimation
+import com.fglshm.tinderui.application.App
+import com.fglshm.tinderui.model.Person
+import kotlinx.android.synthetic.main.recyclerview_like_list_item.*
 
 
 class SwipeFragment : BaseFragment() {
@@ -52,6 +57,75 @@ class SwipeFragment : BaseFragment() {
     private var diffY: Float = 0F
 
     private var topCard: CardView? = null
+    private var topPerson: Person? = null
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setInitialCards()
+        setClickListener()
+    }
+
+    private fun setInitialCards() {
+        atomicInteger = AtomicInteger()
+        repeat(3) {
+            val card = createCardView()
+            cardContainer.addView(card, 0)
+            val animation = AlphaAnimation(0f, 1f)
+            animation.duration = 300
+            card.startAnimation(animation)
+        }
+    }
+
+    private fun setClickListener() {
+        likeCard.setOnClickListener {
+            setCardState()
+            saveLikePerson(topPerson)
+            handleButton(true)
+        }
+        dislikeCard.setOnClickListener {
+            setCardState()
+            handleButton(false)
+        }
+        likeListButton.setOnClickListener {
+            listener?.onLikeListButtonClick()
+        }
+        reloadButton.setOnClickListener {
+            resetLikeList()
+            it.alpha = 0.0F
+            it.visibility = View.GONE
+            progressBar.visibility = View.VISIBLE
+            progressBar.animate().apply {
+                duration = 250
+                alpha(1.0F)
+            }.start()
+            Handler().postDelayed({
+                run {
+                    progressBar.alpha = 0.0F
+                    progressBar.visibility = View.GONE
+                    setInitialCards()
+                }
+            }, 1000)
+        }
+    }
+
+    private fun setCardState() {
+        likeCard.isEnabled = false
+        dislikeCard.isEnabled = false
+        Handler().postDelayed({
+            run {
+                likeCard.isEnabled = true
+                dislikeCard.isEnabled = true
+            }
+        }, 1000)
+    }
+
+    private fun resetLikeList() {
+        val persons = App.realm?.where(Person::class.java)?.findAll()
+        App.realm?.executeTransaction {
+            persons?.deleteAllFromRealm()
+            Log.d("App", "[ ALL DELETED ]")
+        }
+    }
 
     private val cardTouchListener = View.OnTouchListener { card, event ->
         when (event.action) {
@@ -115,9 +189,16 @@ class SwipeFragment : BaseFragment() {
             }.setListener(object : Animator.AnimatorListener {
                 @SuppressLint("ClickableViewAccessibility")
                 override fun onAnimationEnd(animation: Animator?) {
+                    if (direction > 0) {
+                        saveLikePerson(topPerson)
+                    }
                     if (cardContainer.childCount > 1) {
                         val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2)) as? CardView
                         topCard = nextCard
+                        topPerson = Person(
+                            topCard?.text_name_card_item?.text.toString(),
+                            topCard?.text_description_card_item?.text.toString()
+                        )
                         nextCard?.setOnTouchListener(cardTouchListener)
                     }
                     cardContainer.removeViewAt(cardContainer.childCount.minus(1))
@@ -156,52 +237,6 @@ class SwipeFragment : BaseFragment() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setInitialCards()
-        setClickListener()
-    }
-
-    private fun setInitialCards() {
-        atomicInteger = AtomicInteger()
-        repeat(3) {
-            val card = createCardView()
-            cardContainer.addView(card, 0)
-            val animation = AlphaAnimation(0f, 1f)
-            animation.duration = 300
-            card.startAnimation(animation)
-        }
-    }
-
-    private fun setClickListener() {
-        likeCard.setOnClickListener {
-            showLog(topCard?.text_name_card_item?.text)
-            handleButton(true)
-        }
-        dislikeCard.setOnClickListener {
-            handleButton(false)
-        }
-        likeListButton.setOnClickListener {
-            listener?.onLikeListButtonClick()
-        }
-        reloadButton.setOnClickListener {
-            it.alpha = 0.0F
-            it.visibility = View.GONE
-            progressBar.visibility = View.VISIBLE
-            progressBar.animate().apply {
-                duration = 250
-                alpha(1.0F)
-            }.start()
-            Handler().postDelayed({
-                run {
-                    progressBar.alpha = 0.0F
-                    progressBar.visibility = View.GONE
-                    setInitialCards()
-                }
-            }, 1000)
-        }
-    }
-
     private fun handleButton(isLike: Boolean) {
         if (cardContainer.childCount == 0) return
         val topCard = cardContainer.getChildAt(cardContainer.childCount.minus(1))
@@ -220,6 +255,10 @@ class SwipeFragment : BaseFragment() {
                         if (cardContainer.childCount > 1) {
                             val nextCard = cardContainer.getChildAt(cardContainer.childCount.minus(2)) as? CardView
                             this@SwipeFragment.topCard = nextCard
+                            topPerson = Person(
+                                nextCard?.text_name_card_item?.text.toString(),
+                                nextCard?.text_description_card_item?.text.toString()
+                            )
                             nextCard?.setOnTouchListener(cardTouchListener)
                         }
                         cardContainer.removeViewAt(cardContainer.childCount.minus(1))
@@ -268,10 +307,12 @@ class SwipeFragment : BaseFragment() {
             Glide.with(mContext).load(imageList[atomicInteger.get() % 11])
                 .apply(RequestOptions().override(imageWidth, imageHeight)).centerCrop().into(this)
         }
+        val desc = descList[atomicInteger.get() % 11]
+        val name = nameList[atomicInteger.getAndIncrement() % 11]
         card.text_description_card_item.text = null
         card.text_name_card_item.text = null
-        card.text_description_card_item.text = descList[atomicInteger.get() % 11]
-        card.text_name_card_item.text = nameList[atomicInteger.getAndIncrement() % 11]
+        card.text_description_card_item.text = desc
+        card.text_name_card_item.text = name
 
         // this is for achieving scale animation when top car is gone.
         if (atomicInteger.get() != 1) {
@@ -280,6 +321,7 @@ class SwipeFragment : BaseFragment() {
         } else {
             card.setOnTouchListener(cardTouchListener)
             topCard = card
+            topPerson = Person(name, desc)
         }
 
         val params = LinearLayout.LayoutParams(
@@ -294,6 +336,14 @@ class SwipeFragment : BaseFragment() {
         params.topMargin = peopleImageWidth.plus(32.times(scale))
         card.layoutParams = params
         return card
+    }
+
+    private fun saveLikePerson(person: Person?) {
+        App.realm?.executeTransaction { r ->
+            person?.let {
+                r.copyToRealm(person)
+            }
+        }
     }
 
 }

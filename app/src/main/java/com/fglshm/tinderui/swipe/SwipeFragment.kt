@@ -78,11 +78,13 @@ class SwipeFragment : BaseFragment() {
 
     private fun setClickListener() {
         likeCard.setOnClickListener {
+            if (cardContainer.childCount == 0) return@setOnClickListener
             setCardState()
             saveLikePerson(topPerson)
             handleButton(true)
         }
         dislikeCard.setOnClickListener {
+            if (cardContainer.childCount == 0) return@setOnClickListener
             setCardState()
             handleButton(false)
         }
@@ -238,7 +240,6 @@ class SwipeFragment : BaseFragment() {
     }
 
     private fun handleButton(isLike: Boolean) {
-        if (cardContainer.childCount == 0) return
         val topCard = cardContainer.getChildAt(cardContainer.childCount.minus(1))
         val animatedTextView = if (isLike) topCard.text_like_card_item else topCard.text_dislike_card_item
         animatedTextView.animate().apply {

@@ -15,7 +15,8 @@ object Data {
         R.drawable.person8,
         R.drawable.person9,
         R.drawable.person10,
-        R.drawable.person11
+        R.drawable.person11,
+        R.drawable.person12
     )
 
     val nameList = listOf(
@@ -29,21 +30,23 @@ object Data {
         "Marissa Al Brady",
         "Carrie Sanders",
         "Sunny Davidson Curran",
-        "Mina Morrison Briones"
+        "Mina Morrison Briones",
+        "Joseph M. Kearns"
     )
 
     val descList = listOf(
-        "Hello, my name is Debbie Miller Wilson",
-        "Hello, my name is Darlene N. Riley",
-        "Hello, my name is Natasha Morgan Christian",
+        "Who would have poisoned the old man's dog?",
+        "The victim had tried to write something as he was dying",
+        "He was successful, attractive and charming but...",
         "Hello, my name is Eloise Erickson Dawkins",
-        "Hello, my name is Fatma Lucia Holbrook",
+        "It was the trip of a lifetime, yet",
         "Hello, my name is Tin Gill Stanford",
-        "Hello, my name is Liam Maxima",
+        "As soon as she walked in, she felt the tension",
         "Hello, my name is Marissa Al Brady",
-        "Hello, my name is Carrie Sanders",
+        "It would only be a fling",
         "Hello, my name is Sunny Davidson Curran",
-        "Hello, my name is Mina Morrison Briones"
+        "Hello, my name is Mina Morrison Briones",
+        "I'm living in Sunnyvale."
     )
 
 }

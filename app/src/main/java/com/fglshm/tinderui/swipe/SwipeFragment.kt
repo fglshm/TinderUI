@@ -22,6 +22,7 @@ import com.fglshm.tinderui.data.Data
 import android.view.animation.AlphaAnimation
 import com.fglshm.tinderui.application.App
 import com.fglshm.tinderui.model.Person
+import kotlin.math.abs
 
 class SwipeFragment : BaseFragment() {
 
@@ -155,8 +156,8 @@ class SwipeFragment : BaseFragment() {
     private fun handleActionMove(event: MotionEvent, card: View) {
         diffX = event.rawX.minus(initX)
         diffY = event.rawY.minus(initY)
-        val scale = if (Math.abs(diffX) < 350) {
-            0.95.plus(0.05 * Math.abs(diffX) / 350)
+        val scale = if (abs(diffX) < 350) {
+            0.95.plus(0.05 * abs(diffX) / 350)
         } else {
             1.0
         }
@@ -166,7 +167,7 @@ class SwipeFragment : BaseFragment() {
         direction = if (diffX > 0) 1 else -1
         card.translationX = diffX
         card.translationY = diffY
-        val alpha = Math.abs(diffX / 350)
+        val alpha = abs(diffX / 350)
         val angle = if (direction > 0) { // to right
             card.text_like_card_item.alpha = alpha
             -Math.PI * 2F * direction * diffX / 180
@@ -181,7 +182,7 @@ class SwipeFragment : BaseFragment() {
      * the action when user stops gesture
      */
     private fun handleActionUp(card: View) {
-        if (Math.abs(diffX) > 350) {
+        if (abs(diffX) > 350) {
             card.animate().apply {
                 duration = 100
                 translationX(1500F * direction)
@@ -295,6 +296,7 @@ class SwipeFragment : BaseFragment() {
 
     @SuppressLint("ClickableViewAccessibility", "InflateParams")
     private fun createCardView(): View {
+        val maxSize = Data.imageList.size
         val card = LayoutInflater.from(mContext).inflate(R.layout.card_item, null) as CardView
         val imageWidth = screenWidth
         val imageHeight = screenHeight
@@ -302,11 +304,11 @@ class SwipeFragment : BaseFragment() {
             requestLayout()
             layoutParams.width = imageWidth
             layoutParams.height = imageHeight
-            Glide.with(mContext).load(imageList[atomicInteger.get() % 11])
+            Glide.with(mContext).load(imageList[atomicInteger.get() % maxSize])
                 .apply(RequestOptions().override(imageWidth, imageHeight)).centerCrop().into(this)
         }
-        val desc = descList[atomicInteger.get() % 11]
-        val name = nameList[atomicInteger.getAndIncrement() % 11]
+        val desc = descList[atomicInteger.get() % maxSize]
+        val name = nameList[atomicInteger.getAndIncrement() % maxSize]
         card.text_description_card_item.text = null
         card.text_name_card_item.text = null
         card.text_description_card_item.text = desc

@@ -1,7 +1,6 @@
 package com.fglshm.tinderui.main
 
 import android.os.Bundle
-import android.util.Log
 import com.fglshm.tinderui.R
 import com.fglshm.tinderui.base.BaseActivity
 import com.fglshm.tinderui.extension.transact

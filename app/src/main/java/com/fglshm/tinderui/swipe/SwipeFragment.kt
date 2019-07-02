@@ -2,7 +2,6 @@ package com.fglshm.tinderui.swipe
 
 import android.animation.Animator
 import android.annotation.SuppressLint
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -23,8 +22,6 @@ import com.fglshm.tinderui.data.Data
 import android.view.animation.AlphaAnimation
 import com.fglshm.tinderui.application.App
 import com.fglshm.tinderui.model.Person
-import kotlinx.android.synthetic.main.recyclerview_like_list_item.*
-
 
 class SwipeFragment : BaseFragment() {
 
